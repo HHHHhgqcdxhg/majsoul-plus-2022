@@ -215,14 +215,14 @@ function addScript(url) {
     })
 
     // 获取扩展基本信息
-    router.get(`/majsoul_plus/extension/:id`, async (ctx, next) => {
+    router.get(`*/majsoul_plus/extension/:id`, async (ctx, next) => {
       ctx.response.status = this.loadedMap.has(ctx.params.id) ? 200 : 404
       ctx.body = this.loadedMap.has(ctx.params.id)
         ? JSON.stringify(this.loadedMap.get(ctx.params.id), null, 2)
         : 'Not Found'
     })
 
-    router.get(`/majsoul_plus/extension/scripts/:id/`, async (ctx, next) => {
+    router.get(`*/majsoul_plus/extension/scripts/:id/`, async (ctx, next) => {
       if (!this.loadedMap.has(ctx.params.id)) {
         ctx.res.statusCode = 404
         return
@@ -261,7 +261,7 @@ function addScript(url) {
       )
     })
 
-    router.get(`/majsoul_plus/:version/code.js`, async (ctx, next) => {
+    router.get(`*/majsoul_plus/:version/code.js`, async (ctx, next) => {
       const url = ctx.request.originalUrl.replace(/^\/majsoul_plus/, '')
       const code = (
         await getRemoteOrCachedFile(url, false, data =>
@@ -278,7 +278,7 @@ function addScript(url) {
       ctx.body = code.replace('new GameMgr', '()=>1')
     })
 
-    router.get('/majsoul_plus/plugin/console.js', async (ctx, next) => {
+    router.get('*/majsoul_plus/plugin/console.js', async (ctx, next) => {
       const result = format(
         `
         const extensionConsole = id => {
@@ -307,7 +307,7 @@ function addScript(url) {
       ctx.body = result
     })
 
-    router.get('/majsoul_plus/plugin/fetch.js', async (ctx, next) => {
+    router.get('*/majsoul_plus/plugin/fetch.js', async (ctx, next) => {
       ctx.res.statusCode = 200
       ctx.res.setHeader('Content-Type', 'application/javascript')
       ctx.body = `window.extensionFetch = id => {
