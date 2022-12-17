@@ -57,7 +57,7 @@ export const RemoteDomains = [
 
 export const Global: MajsoulPlus.Global = {
   version: app.getVersion(),
-  ServerPort: 8887,
+  ServerPort: 443,
   XOR_KEY: 73,
   EXTEND_RES_KEYWORD: 'extendRes',
   ResourcePackConfigPath: '',
@@ -82,7 +82,8 @@ export const Global: MajsoulPlus.Global = {
     enableLargerThanScreen: true,
     webPreferences: {
       nodeIntegration: true,
-      webviewTag: true
+      webviewTag: true,
+      webSecurity: false
     }
   },
   ManagerWindowConfig: {

@@ -25,6 +25,8 @@ import { ToolManager } from '../tool/tool'
 import { AudioPlayer, initPlayer, shutoffPlayer } from './audioPlayer'
 import { ManagerWindow } from './manager'
 
+app.commandLine.appendSwitch('host-resolver-rules','MAP * 127.0.0.1,EXCLUDE gateway-*.maj-soul.com')
+
 export class GameWindows {
   private static windows: Map<number, BrowserWindow> = new Map()
   private static windowIdCount = 0
@@ -109,9 +111,7 @@ export function newGameWindow(id: number) {
       ? (httpServer.address() as AddressInfo)
       : (httpsServer.address() as AddressInfo)
     ).port
-    const url = `http${
-      UserConfigs.userData.useHttpServer ? '' : 's'
-    }://localhost:${port}/`
+    const url = 'https://game.maj-soul.com/1/'
 
     window.webContents.send(
       'load-url',

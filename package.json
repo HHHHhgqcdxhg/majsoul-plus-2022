@@ -7,7 +7,7 @@
   "main": "./dist/index.js",
   "scripts": {
     "sass": "node-sass -q assets/manager/ -o assets/manager/",
-    "pre-build": "tsc && yarn sass && node build.js",
+    "pre-build": "yarn sass && node build.js",
     "debug": "cross-env NODE_ENV=development run-electron .",
     "debug:server": "cross-env NODE_ENV=development SERVER_ONLY=1 run-electron .",
     "debug:detailed": "cross-env NODE_ENV=development run-electron . --enable-logging --v=1 --disable-gpu",

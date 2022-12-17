@@ -5,6 +5,9 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { UserConfigs } from './config'
 import { appDataDir, Global, GlobalPath, RemoteDomains, Logger } from './global'
+import {IncomingMessage} from "http";
+
+const f = fetch
 
 /**
  * 以 latest 对象中的内容更新 toUpdate 对象
@@ -110,22 +113,26 @@ export function isPath(originalUrl: string): boolean {
  * 读取远程的官方资源数据
  * @param url 原始请求的相对路径
  * @param encrypt 是否是加密数据
+ * @param host host
  */
 export async function getRemoteSource(
   url: string,
-  encrypt = false
+  encrypt = false,
+  host = ''
 ): Promise<{ code: number; data: Buffer }> {
-  const remoteUrl = getRemoteUrl(url)
-  const resp = await fetch(remoteUrl, {
+  const remoteUrl = getRemoteUrl(url, host)
+
+  const resp = await f(remoteUrl, {
     headers: {
       'User-Agent': Global.HttpGetUserAgent
-    }
+    },
+    useElectronNet: false
   })
 
   const statusCode = resp.status
   const fileData = await resp.buffer()
   if (statusCode === 302 || statusCode === 301) {
-    return getRemoteSource(resp.headers['location'], encrypt)
+    return getRemoteSource(resp.headers['location'], encrypt, host)
   } else {
     if (statusCode < 200 || statusCode >= 400) {
       Logger.warning(
@@ -184,20 +191,24 @@ export function mkdirsSync(dirname: string) {
 }
 
 // 将 path 转换为远程 URL
-export function getRemoteUrl(originalUrl: string): string {
-  return (
-    RemoteDomains[UserConfigs.userData.serverToPlay].domain +
-    originalUrl.replace(/^\/\d\/?/g, '')
-  )
+export function getRemoteUrl(originalUrl: string, host = ''): string {
+  return  `https://${host}${originalUrl}`
+
 }
 
 // 从远程 URI 转成本地存储路径
 export function getLocalURI(originalUrl: string): string {
+  let modifiedUrl: string;
+  if (!originalUrl || originalUrl === '' || originalUrl === '/') {
+    modifiedUrl = '#$NOT_FOUND#$'
+  } else {
+    modifiedUrl = /^([^?]+)(\?.*)?$/.exec(originalUrl)[1]
+  }
   const dirBase = path.join(appDataDir, GlobalPath.LocalDir)
   return path.join(
     dirBase,
     UserConfigs.userData.serverToPlay.toString(),
-    /^([^?]+)(\?.*)?$/.exec(originalUrl)[1]
+    modifiedUrl
   )
 }
 
@@ -205,9 +216,11 @@ export function getLocalURI(originalUrl: string): string {
 export async function getRemoteOrCachedFile(
   url: string,
   encode = true,
-  callback: (data: Buffer) => Buffer = data => data
+  callback: (data: Buffer) => Buffer = data => data,
+  host = ''
 ): Promise<{ code: number; data: Buffer | string }> {
-  const originalUrl = url.replace(/^\/\d\//g, '')
+  const originalUrl = url
+
   const isEncrypted = isEncryptRes(originalUrl)
   const isRoutePath = isPath(originalUrl)
   const localPath = getLocalURI(originalUrl)
@@ -231,7 +244,8 @@ export async function getRemoteOrCachedFile(
     try {
       const remoteSource = await getRemoteSource(
         originalUrl,
-        isEncrypted && !isRoutePath
+        isEncrypted && !isRoutePath,
+          host
       )
       ret.code = remoteSource.code
       let data = remoteSource.data
@@ -259,11 +273,14 @@ export async function getRemoteOrCachedFile(
 
 // 主进程获取资源
 export async function fetchAnySite(url: string, encoding = 'binary') {
-  const resp = await fetch(url, {
+  const resp = await f(url, {
     headers: {
       'User-Agent': Global.HttpGetUserAgent
-    }
+    },
+    useElectronNet: false
   })
+  // tslint:disable-next-line:ban-ts-ignore
+  // @ts-ignore
   return (await resp.buffer()).toString(encoding)
 }
 
@@ -275,6 +292,8 @@ export async function writeFile(
 ): Promise<void> {
   await mkdirs(path.dirname(to))
   return new Promise((resolve, reject) => {
+    // tslint:disable-next-line:ban-ts-ignore
+    // @ts-ignore
     fs.writeFile(to, data, encoding, err => {
       if (err) {
         reject(err)

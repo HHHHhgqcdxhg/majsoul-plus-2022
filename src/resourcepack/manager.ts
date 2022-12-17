@@ -106,7 +106,7 @@ export default class ResourcePackManager extends BaseManager {
 
   register(server: Koa, router: Router) {
     // 获取资源包基本信息
-    router.get(`/majsoul_plus/resourcepack/:id`, async (ctx, next) => {
+    router.get(`*/majsoul_plus/resourcepack/:id`, async (ctx, next) => {
       ctx.response.status = this.loadedMap.has(ctx.params.id) ? 200 : 404
       ctx.body = this.loadedMap.has(ctx.params.id)
         ? JSON.stringify(this.loadedMap.get(ctx.params.id), null, 2)
@@ -115,10 +115,12 @@ export default class ResourcePackManager extends BaseManager {
 
     // 为每一个资源包分配一个路径
     this.loadedMap.forEach((pack: MajsoulPlus.ResourcePack, id) => {
-      router.get(`/majsoul_plus/resourcepack/${id}/*`, async (ctx, next) => {
-        let queryPath = ctx.path.substr(
-          `/majsoul_plus/resourcepack/${id}/`.length
-        )
+      router.get(`*/majsoul_plus/resourcepack/${id}/*`, async (ctx, next) => {
+        let subLen = `/majsoul_plus/resourcepack/${id}/`.length;
+        if (ctx.url.startsWith('/1')) {
+          subLen += 2
+        }
+        let queryPath = ctx.path.substr(subLen)
         const encrypted = isEncryptRes(queryPath)
 
         // 检测 from 中是否存在 queryPath
@@ -153,7 +155,7 @@ export default class ResourcePackManager extends BaseManager {
 
     // 为每一个扩展分配一个路径
     this.extensionMap.forEach((pack: MajsoulPlus.ResourcePack, id) => {
-      router.get(`/majsoul_plus/extension/${id}/*`, async (ctx, next) => {
+      router.get(`*/majsoul_plus/extension/${id}/*`, async (ctx, next) => {
         let queryPath = ctx.path.substr(`/majsoul_plus/extension/${id}/`.length)
         const encrypted = isEncryptRes(queryPath)
 
@@ -212,9 +214,9 @@ export default class ResourcePackManager extends BaseManager {
     )
 
     // 修改资源映射表
-    router.get(`/resversion([^w]+)w.json`, async (ctx, next) => {
+    router.get(`*/resversion([^w]+)w.json`, async (ctx, next) => {
       ctx.response.type = 'application/json'
-      const remote = await getRemoteSource(ctx.path, false)
+      const remote = await getRemoteSource(ctx.path, false, ctx.host)
 
       if (remote.code !== 200) {
         ctx.res.statusCode = remote.code

@@ -31,9 +31,13 @@ export function LoadServer() {
   server.use(router.routes())
 
   // 默认从远端获取文件
-  server.use(async ctx => {
-    const isRoutePath = isPath(ctx.request.originalUrl)
-    const resp = await getRemoteOrCachedFile(ctx.request.originalUrl)
+  server.use(async (ctx, next) => {
+    let url = ctx.req.url
+    const isRoutePath = isPath(url)
+    const resp = await getRemoteOrCachedFile(url, true, data => data, ctx.request.host)
+    ctx.set('Access-Control-Allow-Origin', '*');
+    ctx.set('Access-Control-Allow-Headers', 'Content-Type,XFILENAME,XFILECATEGORY,XFILESIZE,X-Requested-With,content-type,If-Modified-Since');
+    ctx.set('Access-Control-Allow-Methods', '*');
     ctx.res.statusCode = resp.code
     ctx.body = isRoutePath ? resp.data.toString('utf-8') : resp.data
   })
